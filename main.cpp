@@ -86,6 +86,9 @@ int main() {
 
         // ===== ДІЛЯНКА ВИКЛИКІВ АЛГОРИТМІВ =====
         // Сюди додають виклики своїх алгоритмів Студент А та Студент Б.
+        auto resultA = calculateA(data);
+        auto [methodA, valueA, errorA, opsA, timeA] = *resultA;
+        print_row(methodA, valueA, errorA, std::abs(valueA - exact), opsA, timeA);
         // ===== КІНЕЦЬ ДІЛЯНКИ =====
     } catch (const std::exception& e) {
         std::cerr << "Помилка: " << e.what() << '\n';
