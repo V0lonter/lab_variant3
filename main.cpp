@@ -66,6 +66,52 @@ void print_row(const std::string& method, double value, double error_estimate,
               << num(time_us, 2) << '\n';
 }
 
+// Порівняння двох методів на основному наборі даних.
+void compare_results(double value_a, double value_b, double true_err_a, double true_err_b,
+                     long long ops_a, long long ops_b) {
+    std::cout << "\nПорівняння:\n";
+    std::cout << "  |y_Лагранж - y_сплайн| = " << num(std::abs(value_a - value_b), 2, true) << '\n';
+    std::cout << "  Точніший метод (за фактичною похибкою): "
+              << (true_err_a < true_err_b ? "Лагранж"
+                  : true_err_b < true_err_a ? "кубічний сплайн" : "однаково") << '\n';
+    std::cout << "  Менше арифметичних операцій: "
+              << (ops_a < ops_b ? "Лагранж" : ops_b < ops_a ? "кубічний сплайн" : "однаково") << '\n';
+}
+
+// Як ростуть похибка та вартість зі збільшенням числа вузлів (функція Рунге).
+void run_scaling_experiment() {
+    const double x0 = 0.93;
+    const double exact = f_runge(x0);
+    constexpr int reps = 2000;  // усереднення часу за кількома запусками
+
+    std::cout << "\nЕксперимент: f(x) = 1/(1+25x^2), [-1, 1], x0 = " << x0 << ", точне y = "
+              << num(exact, 8) << "\n";
+    std::cout << pad("n", 5) << pad("Похибка Лагр.", 15) << pad("Похибка спл.", 15)
+              << pad("Опер. Лагр.", 13) << pad("Опер. спл.", 12) << pad("t Лагр., мкс", 14)
+              << "t спл., мкс\n"
+              << std::string(84, '-') << '\n';
+
+    for (int n : {5, 9, 13, 17, 21, 41, 81}) {
+        const auto data = make_input(f_runge, -1.0, 1.0, n, x0);  // один shared_ptr для обох методів
+        double time_a = 0.0;
+        double time_b = 0.0;
+        std::unique_ptr<Result> ra;
+        std::unique_ptr<Result> rb;
+        for (int r = 0; r < reps; ++r) {
+            ra = calculateA(data);
+            rb = calculateB(data);
+            time_a += ra->time_us;
+            time_b += rb->time_us;
+        }
+        std::cout << pad(std::to_string(n), 5)
+                  << pad(num(std::abs(ra->value - exact), 2, true), 15)
+                  << pad(num(std::abs(rb->value - exact), 2, true), 15)
+                  << pad(std::to_string(ra->operations), 13)
+                  << pad(std::to_string(rb->operations), 12)
+                  << pad(num(time_a / reps, 3), 14) << num(time_b / reps, 3) << '\n';
+    }
+}
+
 }  // namespace
 
 int main() {
@@ -85,6 +131,7 @@ int main() {
         print_header();
 
         // ===== ДІЛЯНКА ВИКЛИКІВ АЛГОРИТМІВ =====
+        // Сюди додають виклики своїх алгоритмів Студент А та Студент Б.
         auto resultA = calculateA(data);
         auto [methodA, valueA, errorA, opsA, timeA] = *resultA;
         print_row(methodA, valueA, errorA, std::abs(valueA - exact), opsA, timeA);
@@ -92,6 +139,9 @@ int main() {
         auto [methodB, valueB, errorB, opsB, timeB] = *resultB;
         print_row(methodB, valueB, errorB, std::abs(valueB - exact), opsB, timeB);
         // ===== КІНЕЦЬ ДІЛЯНКИ =====
+
+        compare_results(valueA, valueB, std::abs(valueA - exact), std::abs(valueB - exact), opsA, opsB);
+        run_scaling_experiment();
     } catch (const std::exception& e) {
         std::cerr << "Помилка: " << e.what() << '\n';
         return 1;
