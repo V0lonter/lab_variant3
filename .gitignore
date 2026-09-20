@@ -1,0 +1,6 @@
+# CMake / Visual Studio
+/build
+/.vs
+/out
+/CMakeSettings.json
+*.user
