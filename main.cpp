@@ -85,6 +85,9 @@ int main() {
         print_header();
 
         // ===== ДІЛЯНКА ВИКЛИКІВ АЛГОРИТМІВ =====
+        auto resultA = calculateA(data);
+        auto [methodA, valueA, errorA, opsA, timeA] = *resultA;
+        print_row(methodA, valueA, errorA, std::abs(valueA - exact), opsA, timeA);
         auto resultB = calculateB(data);
         auto [methodB, valueB, errorB, opsB, timeB] = *resultB;
         print_row(methodB, valueB, errorB, std::abs(valueB - exact), opsB, timeB);
